@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" >
+<div id="layoutSidenav_nav" th:fragment="sideNavContent">
+  <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
+    <div class="sb-sidenav-menu">
+      <div class="nav">
+        <div class="sb-sidenav-menu-heading">대시보드</div>
+        <a class="nav-link" th:href="@{/main}">
+          <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
+          Dashboard
+        </a>
+        <div class="sb-sidenav-menu-heading">CCTV 화면</div>
+        <a class="nav-link" th:href="@{/cctv/main}">
+          <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
+          CCTV 화면
+        </a>
+
+        <div class="sb-sidenav-menu-heading">지도</div>
+        <a class="nav-link" th:href="@{/map/main}">
+          <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
+          장비 현황
+        </a>
+
+        <div class="sb-sidenav-menu-heading">경보 현황</div>
+        <a class="nav-link collapsed" data-bs-toggle="collapse" data-bs-target="#collapsePages" aria-expanded="false" aria-controls="collapsePages">
+          <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
+          통계
+          <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+        </a>
+
+
+        <div class="collapse" id="collapsePages" aria-labelledby="headingTwo" data-bs-parent="#sidenavAccordion">
+          <nav class="sb-sidenav-menu-nested nav accordion" id="sidenavAccordionPages">
+            <a class="nav-link" th:href="@{/alarm/stats/year}">
+              연도별 통계
+            </a>
+            <a class="nav-link" th:href="@{/alarm/stats/month}">
+              월별 통계
+            </a>
+            <a class="nav-link" th:href="@{/alarm/stats/day}">
+              일별 통계
+            </a>
+          </nav>
+        </div>
+
+        <div class="sb-sidenav-menu-heading">관리자</div>
+        <a class="nav-link collapsed" data-bs-toggle="collapse" data-bs-target="#collapsePages2" aria-expanded="false" aria-controls="collapsePages2">
+          <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
+          관리 페이지
+          <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+        </a>
+
+
+        <div class="collapse" id="collapsePages2" aria-labelledby="headingTwo" data-bs-parent="#sidenavAccordion">
+          <nav class="sb-sidenav-menu-nested nav accordion" id="sidenavAccordionPages2">
+            <a class="nav-link" th:href="@{/admin/devices}">
+              설치장비 관리
+            </a>
+            <a class="nav-link" th:href="@{/admin/members}">
+              사용자 관리
+            </a>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </nav>
+</div>

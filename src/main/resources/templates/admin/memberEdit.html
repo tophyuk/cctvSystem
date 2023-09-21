@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <th:block th:replace="~{fragments/head :: head}"></th:block>
+</head>
+
+<body class="sb-nav-fixed">
+<div th:replace="~{/fragments/topNav :: topNavContent(memberDto=${memberDto})}"></div>
+
+<div id="layoutSidenav">
+  <div th:replace="~{/fragments/sideNav :: sideNavContent}"></div>
+  <div id="layoutSidenav_content" class="view">
+    <main>
+      <div class="container-fluid px-4">
+        <h1 class="mt-4">사용자 수정</h1>
+        <ol class="breadcrumb mb-4">
+          <li class="breadcrumb-item active">사용자들을 수정하는 페이지입니다.</li>
+        </ol>
+        <div class="row">
+          <div class="col-md-6">
+            <form id="editForm"  th:object="${memberEditDto}"
+                  th:action="@{/admin/members/{id}/edit(id=${id}, pageNum=${searchDto.pageNum}, searchType=${searchDto.searchType}, searchKeyword=${searchDto.searchKeyword})}" method="post">
+              <input type="hidden" name="_method" value="put"/>
+              <div class="mb-3">
+                <label for="editMemberId" class="form-label">아이디</label>
+                <input type="text" class="form-control" id="editMemberId" name="memberId" th:value="*{memberId}" disabled>
+              </div>
+              <div class="mb-3">
+                <label for="editName" class="form-label">이름</label>
+                <input type="text" class="form-control" id="editName" name="name" th:value="*{name}" required>
+              </div>
+              <div class="mb-3">
+                <label for="editEmail" class="form-label">이메일</label>
+                <input type="email" class="form-control" id="editEmail" name="email" th:value="*{email}" required>
+              </div>
+              <div class="mb-3">
+                <label for="editTelNum" class="form-label">전화번호</label>
+                <input type="text" class="form-control" id="editTelNum" name="telNum" th:value="*{telNum}" required>
+              </div>
+              <div class="mb-3">
+                <label for="editRole">권한</label>
+                <select class="form-select" th:field="*{role}" id="editRole">
+                  <option th:each="role : ${roles}"
+                          th:value="${role}"
+                          th:text="${role.name}">
+                    <span th:if="${role == memberEditDto.role}">selected</span>
+                  </option>
+                </select>
+              </div>
+              <a th:if="${searchDto.searchType == null && searchDto.searchKeyword == null}" th:href="@{/admin/members/{id}(id=${id}, pageNum=${searchDto.pageNum})}" class="btn btn-secondary">취소</a>
+              <a th:unless="${searchDto.searchType == null && searchDto.searchKeyword == null}" th:href="@{/admin/members/{id}(id=${id}, pageNum=${searchDto.pageNum}, searchType=${searchDto.searchType}, searchKeyword=${searchDto.searchKeyword})}" class="btn btn-secondary">취소</a>
+              <button type="submit" class="btn btn-success">수정</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+<script src="/js/scripts.js"></script>
+<script>
+function getMembersPerPage(pageNumber) {
+    $.ajax({
+        url: '/admin/members/1',
+        success: function(data) {
+            console.log(data);
+            createMembersTable(data);
+        },
+        error: function(xhr, status, error) {
+        // 오류 처리
+        console.log(error);
+        }
+    });
+
+}
+
+function createMembersTable (data) {
+    var html = '';
+    // HTML에 적용
+    if(data.length == 0) {
+            html += '<tr>';
+            html += '<td colspan="5" style="text-align:center">데이터가 존재하지않습니다.</td>';
+            html += '</tr>';
+        $('#resultBody').html(html);
+    } else {
+        for (var i = 0; i < data.length; i++) {
+            var item = data[i];
+            html += '<tr>';
+            html += '<td>' + item.memberId + '</td>';
+            html += '<td>' + item.name + '</td>';
+            html += '<td>' + item.email + '</td>';
+            html += '<td>' + item.telNum + '</td>';
+            html += '<td>' + item.role + '</td>';
+            html += '</tr>';
+        }
+        $('#resultBody').html(html);
+
+    }
+
+}
+
+</script>
+
+<script>
+$(document).ready(function() {
+    getMembersPerPage(1);
+});
+</script>
+
+
+
+
+</body>
+</html>

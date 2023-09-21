@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/head :: head}"></th:block>
+</head>
+
+<body class="sb-nav-fixed">
+<div th:replace="~{/fragments/topNav :: topNavContent(memberDto=${memberDto})}"></div>
+
+<div id="layoutSidenav">
+    <div th:replace="~{/fragments/sideNav :: sideNavContent}"></div>
+    <div id="layoutSidenav_content" class="view">
+        <main>
+            <div class="container-fluid px-4">
+                <h1 class="mt-4">사용자 관리</h1>
+                <ol class="breadcrumb mb-4">
+                    <li class="breadcrumb-item active">사용자들을 관리하는 페이지입니다.</li>
+                </ol>
+                <div class="row">
+                    <div class="col-xl-3 col-md-4 mb-4">
+                        <select class="form-select form-select-custom" id="searchType">
+                            <option value="" th:selected="${searchDto.searchType == ''}">선택</option>
+                            <option value="memberId" th:selected="${searchDto.searchType == 'memberId'}">아이디</option>
+                            <option value="name" th:selected="${searchDto.searchType == 'name'}">이름</option>
+                        </select>
+                    </div>
+                    <div class="col-xl-3 col-md-4 mb-4">
+                    <div class="input-group">
+                        <input class="form-control" type="text" id="searchKeyword" th:value="${searchDto.searchKeyword}" placeholder="검색어를 입력해주세요" aria-label="검색어를 입력해주세요" aria-describedby="btnNavbarSearch" />
+                        <button class="btn btn-primary" id="btnNavbarSearch" type="button"><i class="fas fa-search"></i></button>
+                    </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xl-12">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <i class="fas fa-chart-area me-1"></i>
+                                사용자 목록
+                            </div>
+                            <div class="card-body">
+                                <table class="table" id="">
+                                    <thead>
+                                    <tr>
+                                        <th scope="col">아이디</th>
+                                        <th scope="col">이름</th>
+                                        <th scope="col">이메일</th>
+                                        <th scope="col">전화번호</th>
+                                        <th scope="col">권한</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="resultBody">
+                                    </tbody>
+                                </table>
+                                <nav>
+                                    <ul class="pagination justify-content-center" id="pagination"></ul>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+<script th:inline="javascript">
+$(document).ready(function() {
+    var pageNum = [[${searchDto.pageNum}]];
+    var searchType = $('#searchType').val();
+    var searchKeyword = $('#searchKeyword').val();
+    if(searchKeyword==''){
+        searchKeyword = null;
+    }
+    if(searchType==''){
+        searchType = null;
+    }
+
+    getMembersPerPage(pageNum, searchType, searchKeyword);
+
+
+    // Handle pagination link clicks
+    $(document).on('click', '.pagination-link', function() {
+        var pageNum = $(this).data('page');
+        var searchType = $('#searchType').val();
+        var searchKeyword = $('#searchKeyword').val();
+        getMembersPerPage(pageNum, searchType, searchKeyword);
+    });
+
+    $(document).on('click', '#btnNavbarSearch', function() {
+        var pageNum = "1";
+        var searchType = $('#searchType').val();
+        var searchKeyword = $('#searchKeyword').val();
+
+
+        if(searchType == "" && searchKeyword == "") {
+            getMembersPerPage(1);
+        } else if(searchType == ""){
+            alert("검색필터를 선택해주세요.");
+            return;
+        } else if(searchKeyword == ""){
+            alert("검색어를 입력해주세요.");
+            return;
+        } else {
+            getMembersPerPage(pageNum, searchType, searchKeyword);
+        }
+
+    });
+
+});
+
+function getMembersPerPage(pageNum, searchType, searchKeyword) {
+    console.log(pageNum);
+    console.log(searchType);
+    console.log(searchKeyword);
+    $.ajax({
+        url: '/admin/members/list',
+        data: {
+            pageNum : pageNum,
+            searchType: searchType,
+            searchKeyword: searchKeyword
+        },
+        success: function(data) {
+            console.log(data);
+            createMembersTable(data, pageNum, searchType, searchKeyword);
+            updatePagination(pageNum, data.totalPages, searchType, searchKeyword);
+        },
+        error: function(xhr, status, error) {
+        // 오류 처리
+        console.log(error);
+        }
+    });
+}
+
+function createMembersTable (data, pageNum, searchType, searchKeyword) {
+    var html = '';
+    console.log(data.content);
+    if(data.content.length === 0) {
+            html += '<tr>';
+            html += '<td colspan="5" style="text-align:center">데이터가 존재하지않습니다.</td>';
+            html += '</tr>';
+        $('#resultBody').html(html);
+    } else {
+        for (var i = 0; i < data.content.length; i++) {
+            var item = data.content[i];
+            html += '<tr data-member-id="' + item.id + '">';
+            html += '<td>' + item.memberId + '</td>';
+            html += '<td>' + item.name + '</td>';
+            html += '<td>' + item.email + '</td>';
+            html += '<td>' + item.telNum + '</td>';
+            html += '<td>' + item.role + '</td>';
+            html += '</tr>';
+        }
+    }
+
+    $('#resultBody').html(html);
+
+    $(document).on('click', '#resultBody tr', function() {
+        var url = '';
+        var id = $(this).data('member-id');
+        id = parseInt(id);
+        if((searchType == undefined) || (searchKeyword == undefined)) {
+            url = '/admin/members/'+ id +'?pageNum='+ pageNum +'';
+        } else {
+            url = '/admin/members/'+ id +'?pageNum='+ pageNum +'&searchType='+ searchType+'&searchKeyword='+ searchKeyword +'';
+        }
+        window.location.href = url;
+    });
+
+}
+function updatePagination(currentPage, totalPages, searchType, searchKeyword) {
+    var paginationContainer = $('#pagination'); // 페이지네이션 컨테이너의 ID를 사용합니다.
+    paginationContainer.empty(); // 기존 페이지네이션을 비웁니다.
+
+    if (totalPages <= 1) {
+        // 페이지가 1페이지 이하인 경우 페이지네이션을 생성하지 않습니다.
+        return;
+    }
+
+    var paginationHTML = '';
+
+    if (currentPage > 1) {
+        paginationHTML += '<li class="page-item"><a class="page-link" href="#" onclick="getMembersPerPage(' + (currentPage - 1) + ');">이전</a></li>';
+    }
+
+    for (var i = 1; i <= totalPages; i++) {
+        if (i === currentPage) {
+            paginationHTML += '<li class="page-item active"><a class="page-link">' + i + '</a></li>';
+        } else {
+            if((searchType == undefined) || (searchKeyword == undefined)) {
+                paginationHTML += '<li class="page-item"><a class="page-link" onclick="getMembersPerPage(' + i + ');">' + i + '</a></li>';
+            } else {
+                paginationHTML += '<li class="page-item"><a class="page-link" onclick="getMembersPerPage(' + i + ', \'' + searchType + '\', \'' + searchKeyword + '\');">' + i + '</a></li>';
+            }
+        }
+    }
+
+    if (currentPage < totalPages) {
+        paginationHTML += '<li class="page-item"><a class="page-link" onclick="getMembersPerPage(' + (currentPage + 1) + ');">다음</a></li>';
+    }
+
+    paginationHTML += '</ul>';
+
+    paginationContainer.html(paginationHTML);
+}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+<script src="/js/scripts.js"></script>
+
+
+
+
+</body>
+</html>

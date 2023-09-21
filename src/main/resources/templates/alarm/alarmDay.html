@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+  <th:block th:replace="~{fragments/head :: head}"></th:block>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="/js/alarm/dataList.js"></script>
+</head>
+
+<body class="sb-nav-fixed">
+
+<div th:replace="~{/fragments/topNav :: topNavContent(memberDto=${memberDto})}"></div>
+
+<div id="layoutSidenav">
+  <div th:replace="~{/fragments/sideNav :: sideNavContent}"></div>
+
+  <div id="layoutSidenav_content" class="view">
+    <main>
+      <div class="container-fluid px-4">
+        <h1 class="mt-4">일별 통계 현황</h1>
+        <ol class="breadcrumb mb-4">
+          <li class="breadcrumb-item active">연도,월,일을 기준으로 시간별 경보 데이터를 안내합니다.</li>
+        </ol>
+        <div class="row">
+          <div class="col-xl-3 col-md-4 mb-4">
+            <select class="form-select form-select-custom" id="year">
+              <!-- Year options will be dynamically added here -->
+            </select>
+            <select class="form-select form-select-custom" id="month">
+              <!-- Year options will be dynamically added here -->
+            </select>
+            <select class="form-select form-select-custom" id="day">
+              <!-- Year options will be dynamically added here -->
+            </select>
+            <button id="graphExcelDownload" class="btn btn-success">엑셀 다운로드</button>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-xl-6">
+            <div class="card mb-4">
+              <div class="card-header">
+                <i class="fas fa-chart-bar me-1"></i>
+                일별 경보이력 현황
+              </div>
+              <div class="card-body"><canvas id="myBarChart" width="100%" height="40"></canvas></div>
+            </div>
+          </div>
+
+          <div class="col-xl-6">
+            <div class="card mb-4">
+              <div class="card-header">
+                <i class="fas fa-chart-area me-1"></i>
+                일별 경보객체 현황
+              </div>
+              <div class="card-body"><canvas id="myPieChart" width="100%" height="40"></canvas></div>
+              <!--<div class="card-body"><canvas id="myAreaChart" width="100%" height="40"></canvas></div>-->
+            </div>
+          </div>
+
+        </div>
+
+        <div class="row">
+          <div class="col-xl-1 col-md-4 mb-4">
+            <select class="form-select selectpicker" data-live-search="true" id="hour">
+              <!-- Year options will be dynamically added here -->
+            </select>
+          </div>
+          <div class="col-xl-3 col-md-4 mb-4">
+            <button id="dataExcelDownload" class="btn btn-success">엑셀 다운로드</button>
+          </div>
+        </div>
+
+        <div class="card mb-4">
+          <div class="card-header">
+            <i class="fas fa-table me-1"></i>
+            일별 경보데이터 현황
+          </div>
+          <div class="card-body data-table">
+            <table class="table">
+              <thead>
+              <tr>
+                <th scope="col">장비명</th>
+                <th scope="col">대상</th>
+                <th scope="col">경보 레벨</th>
+                <th scope="col">관측 시간</th>
+              </tr>
+              </thead>
+
+              <tbody id="resultBody">
+
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+<script src="/js/scripts.js"></script>
+<!--<script src="https://cdn.jsdelivr.net/npm/chart.js@3.5.1/dist/chart.min.js"></script>-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js" crossorigin="anonymous"></script>
+<!--<script src="/js/chart-area-demo.js"></script>-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="/js/chart-bar-demo.js"></script>
+<script src="/js/chart-pie-demo.js"></script>
+<script src="/js/alarm/table-create.js"></script>
+<script src="/js/alarm/excelDownload.js"></script>
+
+
+<script>
+    var currentDate = new Date();
+    var currentYear = currentDate.getFullYear();
+    var currentMonth = currentDate.getMonth()+1;
+    var currentDay = currentDate.getDate();
+
+    // Generate year options
+    for (var i = currentYear; i >= currentYear - 10; i--) {
+      var option = "<option value='" + i + "'>" + i + "</option>";
+      $("#year").append(option);
+    }
+
+    // Generate month options
+    var months = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"];
+    for (var j = 0; j < months.length; j++) {
+      var option = "<option value='" + (j + 1) + "'>" + months[j] + "</option>";
+      $("#month").append(option);
+    }
+
+    $("#year").val(currentYear);
+    $("#month").val(currentMonth);
+
+    // Generate day options based on selected year and month
+    function generateDayOptions(year, month) {
+      // Clear existing day options
+      $("#day").empty();
+
+      // Get the number of days in the selected month and year
+      var daysInMonth = new Date(year, month, 0).getDate();
+
+      // Generate day options
+      for (var day = 1; day <= daysInMonth; day++) {
+        var option = "<option value='" + day + "'>" + day + "일</option>";
+        $("#day").append(option);
+      }
+    }
+
+    // Initialize day options based on current year and month
+    generateDayOptions(currentYear, currentMonth);
+
+    $("#day").val(currentDay);
+
+
+    // Generate month options
+    var hours = ["00시", "01시", "02시", "03시", "04시", "05시", "06시", "07시", "08시", "09시", "10시", "11시", "12시", "13시",
+                  "14시", "15시", "16시", "17시", "18시", "19시", "20시", "21시", "22시", "23시"
+                  ];
+    for (var j = 0; j < hours.length; j++) {
+      var option = "<option value='" + j + "'>" + hours[j] + "</option>";
+      $("#hour").append(option);
+    }
+
+</script>
+
+
+<script>
+    $(document).ready(function() {
+        var type = "day";
+        var selectedYear = $("#year").val();
+        var selectedMonth = $("#month").val();
+        var selectedDay = $("#day").val();
+        var selectedHour = $("#hour").val();
+
+        getAlarmGraph(type, selectedYear, selectedMonth, selectedDay);
+        getTargetGraph(type, selectedYear, selectedMonth, selectedDay);
+        getAlarmData(type, selectedYear, selectedMonth, selectedDay, selectedHour);
+
+
+        $("#year, #month").change(function() {
+          var selectedYear = $("#year").val();
+          var selectedMonth = $("#month").val();
+          generateDayOptions(selectedYear, selectedMonth);
+          var selectedDay = $("#day").val();
+          var selectedHour = $("#hour").val();
+
+          getAlarmGraph(type, selectedYear, selectedMonth, selectedDay);
+          getTargetGraph(type, selectedYear, selectedMonth, selectedDay);
+          getAlarmData(type, selectedYear, selectedMonth, selectedDay, selectedHour);
+        });
+
+        $("#day").change(function() {
+          var selectedYear = $("#year").val();
+          var selectedMonth = $("#month").val();
+          var selectedDay = $("#day").val();
+          var selectedHour = $("#hour").val();
+
+          getAlarmGraph(type, selectedYear, selectedMonth, selectedDay);
+          getTargetGraph(type, selectedYear, selectedMonth, selectedDay);
+          getAlarmData(type, selectedYear, selectedMonth, selectedDay, selectedHour);
+        });
+
+        $("#hour").change(function() {
+          var selectedYear = $("#year").val();
+          var selectedMonth = $("#month").val();
+          var selectedDay = $("#day").val();
+          var selectedHour = $("#hour").val();
+          getAlarmData(type, selectedYear, selectedMonth, selectedDay, selectedHour);
+        });
+
+        $("#graphExcelDownload").click(function() {
+          var selectedYear = $("#year").val();
+          var selectedMonth = $("#month").val();
+          var selectedDay = $("#day").val();
+          graphExcelDownload(type, selectedYear, selectedMonth, selectedDay);
+        });
+
+        $("#dataExcelDownload").click(function() {
+          var selectedYear = $("#year").val();
+          var selectedMonth = $("#month").val();
+          var selectedDay = $("#day").val();
+          var selectedHour = $("#hour").val();
+          dataExcelDownload(type, selectedYear, selectedMonth, selectedDay, selectedHour);
+        });
+
+
+    });
+
+
+
+</script>
+
+
+</body>
+</html>
