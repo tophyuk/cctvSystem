@@ -50,6 +50,13 @@ dependencies {
 
 }
 
+
+task print() {
+	doLast{
+		println "github push complete"
+	}
+}
+
 tasks.named('test') {
 	useJUnitPlatform()
 }
