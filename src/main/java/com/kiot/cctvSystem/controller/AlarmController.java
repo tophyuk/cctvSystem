@@ -74,6 +74,7 @@ public class AlarmController {
     @ResponseBody
     public ResponseEntity<?> insertAlarm(@RequestBody AlarmRequestDto alarmRequestDto)  {
 
+        // jenkins 연동 테스트를 위한 주석
         log.info("alarmDto class={}", alarmRequestDto);
         Alarm alarm = alarmMapper.toAlarm(alarmRequestDto);
         alarmService.createAlarm(alarm);
